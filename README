@@ -3,7 +3,7 @@ Fraktale verteilt berechnen lassen.
 TODO
 ====
 
- - Prüfen, ob begrenzter Prozesspool einem Prozess pro Zeile überlegen ist.
+ ✓ Prüfen, ob begrenzter Prozesspool einem Prozess pro Zeile überlegen ist.
  - Speichern der Bilder effizienter gestalten
  - Fraktalserver implementieren der eine vorgegebene Fläche in eine festgelegte
    Anzahl von Teilen partitioniert und die Teilflächen von anderen Nodes in einem

@@ -27,30 +27,29 @@ calculate_area(MinX, MinY, MaxX, MaxY, PointDistanceX, PointDistanceY) ->
 
 test() ->
   Field = calculate_area(-2, -1, 1, 1, 0.002, 0.002),
-  egd:save(fractal:render(Field), "/tmp/image.png").
+  egd:save(fractal:render(Field), "/tmp/image2.png"),
+  init:stop().
   
 %%
 %% Local Functions
 %%
 
 area_iteration(MinX, MinY, MaxX, MaxY, PointDistanceX, PointDistanceY) ->
-  MyPid = self(),
-  Pids = lists:map(
+  Arguments = lists:map(
     fun(Line) ->
-      spawn(fun() -> line_iteration(MyPid, MinY + Line*PointDistanceY, MinX, MaxX, PointDistanceX) end)
+      [MinY + Line*PointDistanceY, MinX, MaxX, PointDistanceX]
     end,
     lists:seq(0, round((MaxY - MinY) / PointDistanceY))
   ),
-  order_results(catch_lines(Pids), Pids).
+  ppool:run(fun line_iteration/4, Arguments).
 
-line_iteration(Pid, Line, MinX, MaxX, PointDistanceX) ->
-  Result = lists:map(
+line_iteration(Line, MinX, MaxX, PointDistanceX) ->
+  lists:map(
     fun(Row) ->
       point_iteration(MinX + Row*PointDistanceX, Line)
     end,
     lists:seq(0, round((MaxX - MinX) / PointDistanceX))
-  ),
-  Pid ! {self(), Result}.
+  ).
 
 point_iteration(X, Y) ->
   point_iteration(X, Y, 1, 0, 0).
@@ -70,20 +69,4 @@ point_iteration(CX, CY, Iteration, X, Y) ->
 	 {CX, CY, {C,0,0}}
       end
       % Iteration - math:log(math:log(AbsoluteSquare) / math:log(4)) / math:log(2) % damit es bunt wird
-  end.
-
-catch_lines([]) ->
-  [];
-catch_lines([_Pid|T]) ->
-  receive
-    Result -> io:format("line returned ~p left~n", [length(T)]),
-       [Result | catch_lines(T)]
-  end.
-
-order_results(_, []) -> [];
-order_results(Results, [Pid|T]) ->
-  case lists:keysearch(Pid, 1, Results) of
-    false -> erlang:error("Pid not found.");
-    {value, {Pid, Result}} ->
-	[Result | order_results(Results, T)]
   end.

@@ -8,7 +8,9 @@ render(Fractal) ->
 io:format("~p, ~p~n", [Height, Width]),
   Image = egd:create(Width, Height),
   render_lines(Image, Fractal, 0),
-  egd:render(Image,png).
+  Bin = egd:render(Image,png),
+  egd:destroy(Image),
+  Bin.
 
 % Local Functions
 
