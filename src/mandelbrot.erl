@@ -15,7 +15,7 @@
 
 
 -define(MAXIMUM_ABSOLUTE_SQARE, 2).
--define(MAXIMUM_ITERATIONS, 5000).
+-define(MAXIMUM_ITERATIONS, 256).
 
 
 %%
@@ -26,20 +26,8 @@ calculate_area(MinX, MinY, MaxX, MaxY, PointDistanceX, PointDistanceY) ->
   area_iteration(MinX, MinY, MaxX, MaxY, PointDistanceX, PointDistanceY).
 
 test() ->
-  Field = calculate_area(-2, -1, 1, 1, 0.05, 0.05),
-  lists:map(
-    fun(Line) ->
-         lists:map(
-           fun(Element) ->
-             io:format("~p", [Element])
-           end,
-           Line
-         ),
-         io:format("~n")
-    end,
-    Field
-  ),
-  erlang:exit(ok).
+  Field = calculate_area(-2, -1, 1, 1, 0.002, 0.002),
+  egd:save(fractal:render(Field), "/tmp/image.png").
   
 %%
 %% Local Functions
@@ -76,8 +64,10 @@ point_iteration(CX, CY, Iteration, X, Y) ->
       point_iteration(CX, CY, Iteration+1, XT, YT);
     true ->
       if 
-        Iteration == ?MAXIMUM_ITERATIONS -> 1;
-        true -> 0
+        Iteration == ?MAXIMUM_ITERATIONS -> {CX, CY, {0,0,0}};
+        true ->
+	 C = round(Iteration - math:log(math:log(AbsoluteSquare) / math:log(4)) / math:log(2)) rem 255,
+	 {CX, CY, {C,0,0}}
       end
       % Iteration - math:log(math:log(AbsoluteSquare) / math:log(4)) / math:log(2) % damit es bunt wird
   end.
