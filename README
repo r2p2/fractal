@@ -4,8 +4,14 @@ TODO
 ====
 
  ✓ Prüfen, ob begrenzter Prozesspool einem Prozess pro Zeile überlegen ist.
- - Speichern der Bilder effizienter gestalten
- - Fraktalserver implementieren der eine vorgegebene Fläche in eine festgelegte
+ ✓ Speichern der Bilder effizienter gestalten
+ ✓ Fraktalserver implementieren der eine vorgegebene Fläche in eine festgelegte
    Anzahl von Teilen partitioniert und die Teilflächen von anderen Nodes in einem
    Pool berechnen lässt.
  - Kommunikation zwischen Client und Server komprimieren.
+ - Klient und oder Server verbauchen zu viel Speicher. Die Ursache muss gefunden
+   und beseitigt werden.
+ - Der Klient sollte sich sauber beenden, wenn der Server keine neuen Aufgaben für
+   ihn hat.
+ - Sind alle aufgaben gelöst, sollte der Server zum nächsten Detaillierungsgrad
+   wechseln. Hebt unter Umständen die vorangegangene Aufgabe auf.
