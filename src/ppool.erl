@@ -51,7 +51,7 @@ order_results(Results, [Argument|T]) ->
   case lists:keysearch(Argument, 1, Results) of
     false -> erlang:error("Argument not found.");
     {value, {_Argument, Result}} ->
-	[Result | order_results(Results, T)]
+      [Result | order_results(Results, T)]
   end.
 
 catch_result(Fun, Arguments, Idle, Worker, Results) ->
