@@ -5,7 +5,7 @@
 % API Functions
 
 start() ->
-  start(20, 20, -2, -2, 2, 2).
+  start(1, 1, -2, -2, 2, 2).
 
 start(VParts, HParts, MinX, MinY, MaxX, MaxY) ->
   VDist = (MaxY-MinY)/VParts,
@@ -18,7 +18,7 @@ start(VParts, HParts, MinX, MinY, MaxX, MaxY) ->
           NMinY = MinY + Row*VDist,
           NMaxX = MinX + (Column+1)*HDist,
           NMaxY = MinY + (Row+1)*VDist,
-          {NMinX, NMinY, NMaxX, NMaxY, VDist/1000, HDist/1000}
+          {NMinX, NMinY, NMaxX, NMaxY, VDist/100, HDist/100}
         end,
         lists:seq(0, HParts-1)
       )
@@ -26,7 +26,6 @@ start(VParts, HParts, MinX, MinY, MaxX, MaxY) ->
     lists:seq(0, VParts-1)
   )),
  io:format("~p~n", [Tasks]), 
-  %DrawPid = spawn(fun() -> draw_loop() end),
   DrawPid = spawn(fun() -> write_loop() end),
   global:register_name(?MODULE, spawn(fun() -> loop(DrawPid, Tasks, []) end)).
 
@@ -61,33 +60,6 @@ loop(DrawPid, [Task|T], TasksInProgress) ->
       loop(DrawPid, [Task|T], lists:delete(MyTask, TasksInProgress))
   end.
 
-draw_loop() ->
-  receive
-    {_Task, Field} ->
-      egd:save(render(Field), "/tmp/bilder/"++integer_to_list(random:uniform(1000))++".png" )
-  end,
-  draw_loop().
-
-render(Fractal) ->
-  Height = length(Fractal),
-  Width = length(lists:nth(1, Fractal)),
-io:format("~p, ~p~n", [Height, Width]),
-  Image = egd:create(Width, Height),
-  render_lines(Image, Fractal, 0),
-  Bin = egd:render(Image,png),
-  egd:destroy(Image),
-  Bin.
-
-render_lines(_, [], _) -> ok;
-render_lines(Image, [Line|T], Y) ->
-  render_pixel(Image, Line, 0, Y),
-  render_lines(Image, T, Y+1).
-
-render_pixel(_, [], _, _) -> ok;
-render_pixel(Image, [{_, _, Value}|T], X, Y) ->
-  egd:line(Image, {X, Y}, {X, Y}, egd:color(Image, Value)),
-  render_pixel(Image, T, X+1, Y).
-  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 write_loop() ->
@@ -109,7 +81,11 @@ format_lines(Image, [Line|T], Y) ->
   format_pixel(Image, Line, 0, Y) ++ format_lines(Image, T, Y+1).
 
 format_pixel(_, [], _, _) -> "";
-format_pixel(Image, [{_, _, {R, G, B}}|T], X, Y) ->
+format_pixel(Image, [{R, G, B}|T], X, Y) -> 
   integer_to_list(R) ++ " " ++ integer_to_list(G) ++ " " ++ integer_to_list(B) ++ "\n" ++ format_pixel(Image, T, X+1, Y).
+
+to_list(V) when is_float(V) -> float_to_list(V);
+to_list(V) when is_integer(V) -> integer_to_list(V).
+
 
 

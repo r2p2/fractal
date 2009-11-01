@@ -50,7 +50,7 @@ area_iteration(MinX, MinY, MaxX, MaxY, PointDistanceX, PointDistanceY) ->
     fun(Line) ->
       [MinY + Line*PointDistanceY, MinX, MaxX, PointDistanceX]
     end,
-    lists:seq(0, round((MaxY - MinY) / PointDistanceY))
+    lists:seq(0, round((MaxY - MinY) / PointDistanceY)-1)
   ),
   ppool:run(fun line_iteration/4, Arguments).
 
@@ -59,7 +59,7 @@ line_iteration(Line, MinX, MaxX, PointDistanceX) ->
     fun(Row) ->
       point_iteration(MinX + Row*PointDistanceX, Line)
     end,
-    lists:seq(0, round((MaxX - MinX) / PointDistanceX))
+    lists:seq(0, round((MaxX - MinX) / PointDistanceX)-1)
   ).
 
 point_iteration(X, Y) ->
@@ -74,10 +74,10 @@ point_iteration(CX, CY, Iteration, X, Y) ->
       point_iteration(CX, CY, Iteration+1, XT, YT);
     true ->
       if 
-        Iteration == ?MAXIMUM_ITERATIONS -> {CX, CY, {0,0,0}};
+        Iteration == ?MAXIMUM_ITERATIONS -> {0,0,0};
         true ->
 	 C = round(Iteration - math:log(math:log(AbsoluteSquare) / math:log(4)) / math:log(2)) rem 255,
-	 {CX, CY, {C,C,0}}
+	 {C,C,0}
       end
       % Iteration - math:log(math:log(AbsoluteSquare) / math:log(4)) / math:log(2) % damit es bunt wird
   end.

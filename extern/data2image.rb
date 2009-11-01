@@ -48,7 +48,7 @@ def extract_color_from_line(line)
 end
 
 def new_line?(x, width)
-  x>=width
+  x=width-1
 end
 
 def main(filename)
