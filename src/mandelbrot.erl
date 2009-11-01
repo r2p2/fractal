@@ -11,7 +11,7 @@
 %% Exported Functions
 %%
 -export([calculate_area/6]).
--export([start/0,loop/0,test/0]).
+-export([start/0, start_profiling/0, loop/1, test/0]).
 
 
 -define(MAXIMUM_ABSOLUTE_SQARE, 4).
@@ -24,12 +24,20 @@
 start() ->
   net_adm:ping('fs@ares'),
   timer:sleep(1000),
-  loop().
+  loop(1),
+  init:stop().
 
-loop() ->
-  {task, {MinX, MinY, MaxX, MaxY, PDX, PDY}} = fractal_server:task_request(),
-  fractal_server:solution({MinX, MinY, MaxX, MaxY, PDX, PDY}, calculate_area(MinX, MinY, MaxX, MaxY, PDX, PDY)), 
-  loop().
+start_profiling() ->
+  percept:profile("/tmp/mandelbrot_profile.dat", {mandelbrot, start, []}, [procs]).
+
+loop(Round) ->
+  case fractal_server:task_request() of
+    {task, {MinX, MinY, MaxX, MaxY, PDX, PDY}} ->
+      fractal_server:solution({MinX, MinY, MaxX, MaxY, PDX, PDY}, calculate_area(MinX, MinY, MaxX, MaxY, PDX, PDY)),
+      loop(Round+1);
+    no_tasks_left ->
+      ok
+  end.
 
 calculate_area(MinX, MinY, MaxX, MaxY, PointDistanceX, PointDistanceY) ->
   area_iteration(MinX, MinY, MaxX, MaxY, PointDistanceX, PointDistanceY).
@@ -76,7 +84,9 @@ point_iteration(CX, CY, Iteration, X, Y) ->
       if 
         Iteration == ?MAXIMUM_ITERATIONS -> {0,0,0};
         true ->
-	 C = round(Iteration - math:log(math:log(AbsoluteSquare) / math:log(4)) / math:log(2)) rem 255,
+	 %C = round(Iteration - math:log(math:log(AbsoluteSquare) / math:log(4)) / math:log(2)) rem 255,
+	 %C = round((Iteration - math:log(math:log(AbsoluteSquare) / math:log(4)) / math:log(2))/?MAXIMUM_ITERATIONS * 255),
+	 C = round(Iteration/?MAXIMUM_ITERATIONS * 255),
 	 {C,C,0}
       end
       % Iteration - math:log(math:log(AbsoluteSquare) / math:log(4)) / math:log(2) % damit es bunt wird

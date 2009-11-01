@@ -1,11 +1,14 @@
 -module(fractal_server).
 
--export([start/0, start/6, task_request/0, solution/2]).
+-export([start/0, start/6, start_profiling/0, task_request/0, solution/2]).
 
 % API Functions
 
 start() ->
-  start(1, 1, -2, -2, 2, 2).
+  start(2, 2, -2, -2, 2, 2).
+
+start_profiling() ->
+  percept:profile("/tmp/fractal_server_profile.dat", {fractal_server, start, []}, [procs]).
 
 start(VParts, HParts, MinX, MinY, MaxX, MaxY) ->
   VDist = (MaxY-MinY)/VParts,
@@ -18,7 +21,7 @@ start(VParts, HParts, MinX, MinY, MaxX, MaxY) ->
           NMinY = MinY + Row*VDist,
           NMaxX = MinX + (Column+1)*HDist,
           NMaxY = MinY + (Row+1)*VDist,
-          {NMinX, NMinY, NMaxX, NMaxY, VDist/100, HDist/100}
+          {NMinX, NMinY, NMaxX, NMaxY, VDist/300, HDist/300}
         end,
         lists:seq(0, HParts-1)
       )
@@ -26,7 +29,7 @@ start(VParts, HParts, MinX, MinY, MaxX, MaxY) ->
     lists:seq(0, VParts-1)
   )),
  io:format("~p~n", [Tasks]), 
-  DrawPid = spawn(fun() -> write_loop() end),
+  DrawPid = spawn(fun() -> write_loop(1) end),
   global:register_name(?MODULE, spawn(fun() -> loop(DrawPid, Tasks, []) end)).
 
 task_request() ->
@@ -62,15 +65,15 @@ loop(DrawPid, [Task|T], TasksInProgress) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-write_loop() ->
+write_loop(Round) ->
   receive
     {_Task, Field} ->
-      file:write_file("./images/"++integer_to_list(random:uniform(100000))++".txt", format(Field))
+      file:write_file("./images/"++integer_to_list(Round)++".txt", format(Field))
   end,
-  write_loop().
+  write_loop(Round+1).
 
 format(Fractal) ->
-  io:format("ndd~n"),
+  io:format("file writing started~n"),
   Height = length(Fractal),
   Width = length(lists:nth(1, Fractal)),
   Image = egd:create(Width, Height),
