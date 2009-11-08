@@ -22,10 +22,13 @@
 %%
 
 start() ->
-  net_adm:ping('fs@ares'),
-  timer:sleep(1000),
-  loop(1),
+  start('fs@ares'),
   init:stop().
+
+start(Node) ->
+  net_adm:ping(Node),
+  timer:sleep(500),
+  loop(1).
 
 start_profiling() ->
   percept:profile("/tmp/mandelbrot_profile.dat", {mandelbrot, start, []}, [procs]).
@@ -63,12 +66,12 @@ area_iteration(MinX, MinY, MaxX, MaxY, PointDistanceX, PointDistanceY) ->
   ppool:run(fun line_iteration/4, Arguments).
 
 line_iteration(Line, MinX, MaxX, PointDistanceX) ->
-  lists:map(
+  list_to_binary(lists:map(
     fun(Row) ->
       point_iteration(MinX + Row*PointDistanceX, Line)
     end,
     lists:seq(0, round((MaxX - MinX) / PointDistanceX)-1)
-  ).
+  )).
 
 point_iteration(X, Y) ->
   point_iteration(X, Y, 1, 0, 0).
@@ -81,13 +84,5 @@ point_iteration(CX, CY, Iteration, X, Y) ->
       YT = 2*X*Y + CY,
       point_iteration(CX, CY, Iteration+1, XT, YT);
     true ->
-      if 
-        Iteration == ?MAXIMUM_ITERATIONS -> {0,0,0};
-        true ->
-	 %C = round(Iteration - math:log(math:log(AbsoluteSquare) / math:log(4)) / math:log(2)) rem 255,
-	 %C = round((Iteration - math:log(math:log(AbsoluteSquare) / math:log(4)) / math:log(2))/?MAXIMUM_ITERATIONS * 255),
-	 C = round(Iteration/?MAXIMUM_ITERATIONS * 255),
-	 {C,C,0}
-      end
-      % Iteration - math:log(math:log(AbsoluteSquare) / math:log(4)) / math:log(2) % damit es bunt wird
+      <<Iteration:16>>
   end.

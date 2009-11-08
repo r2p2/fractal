@@ -21,7 +21,7 @@ start(VParts, HParts, MinX, MinY, MaxX, MaxY) ->
           NMinY = MinY + Row*VDist,
           NMaxX = MinX + (Column+1)*HDist,
           NMaxY = MinY + (Row+1)*VDist,
-          {NMinX, NMinY, NMaxX, NMaxY, VDist/300, HDist/300}
+          {NMinX, NMinY, NMaxX, NMaxY, VDist/10000, HDist/10000}
         end,
         lists:seq(0, HParts-1)
       )
@@ -39,7 +39,7 @@ task_request() ->
   end.
 
 solution(Task, Field) ->
-  global:whereis_name(?MODULE) ! {solution, Task, Field}.
+    global:whereis_name(?MODULE) ! {solution, Task, list_to_binary(Field)}.
 
 % Local Functions
 
@@ -67,28 +67,21 @@ loop(DrawPid, [Task|T], TasksInProgress) ->
 
 write_loop(Round) ->
   receive
-    {_Task, Field} ->
-      file:write_file("./images/"++integer_to_list(Round)++".txt", format(Field))
+    {Task, Field} ->
+      {ok, File} = file:open("./images/"++integer_to_list(Round)++".txt", [write, delayed_write]),
+      format(Task, Field, File),
+      ok = file:close(File)
   end,
   write_loop(Round+1).
 
-format(Fractal) ->
+format({MinX, MinY, MaxX, MaxY, VR, HR}, Fractal, File) ->
   io:format("file writing started~n"),
-  Height = length(Fractal),
-  Width = length(lists:nth(1, Fractal)),
-  Image = egd:create(Width, Height),
-  integer_to_list(Width) ++ " " ++ integer_to_list(Height) ++ "\n" ++ format_lines(Image, Fractal, 0).
+  %Height = length(Fractal),
+  %Width = length(lists:nth(1, Fractal)),
+  file:write(File, list_to_binary(integer_to_list(round((MaxX-MinX)/VR)) ++ " " ++ integer_to_list(round((MaxY-MinY)/HR)) ++ "\n")),
+  format_lines(File, Fractal).
 
-format_lines(_, [], _) -> "";
-format_lines(Image, [Line|T], Y) ->
-  format_pixel(Image, Line, 0, Y) ++ format_lines(Image, T, Y+1).
-
-format_pixel(_, [], _, _) -> "";
-format_pixel(Image, [{R, G, B}|T], X, Y) -> 
-  integer_to_list(R) ++ " " ++ integer_to_list(G) ++ " " ++ integer_to_list(B) ++ "\n" ++ format_pixel(Image, T, X+1, Y).
-
-to_list(V) when is_float(V) -> float_to_list(V);
-to_list(V) when is_integer(V) -> integer_to_list(V).
-
-
-
+format_lines(_, <<>>) -> ok;
+format_lines(File, <<Iteration:16, Rest/binary>>) ->
+  file:write(File, list_to_binary(integer_to_list(Iteration) ++ "\n")),
+  format_lines(File, Rest).

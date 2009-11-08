@@ -1,2 +1,6 @@
 *.beam
 *.dump
+*~
+images/*
+ebin/*
+bin/*
